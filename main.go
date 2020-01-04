@@ -29,17 +29,24 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	http.Handle("/login", &templateHandler{filename: "login.html"})
+
 	// http.Handle の第二引数は Handler型。Handler型はServeHTTPメソッドを持つインターフェース
 	// *templateHandlerにServeHTTPメソッドを定義したのは、http.Handleにわたすため。
-	http.Handle("/", &templateHandler{filename: "chat.html"})
-	r := newRoom()
+	// MustAuthにより、&templateHandlerをラップしたauthHandlerを生成する
+	// まずauthHandlerのServeHTTPが呼ばれ、ログイン判定を行い、ログイン済みの場合はtemplateHandlerの
+	// ServeHTTPが呼ばれる。
+	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
+
 	// roomのserveHTTP内でWebSocketとのコネクション確立、room.joinへの追加、継続的なWebSocketのデータ読み込みが行われる
+	r := newRoom()
 	http.Handle("/room", r)
 	// 別のgoroutineでrunメソッドを実行
 	// runメソッドのselect節では、defaultがないのでjoin,leave,forwardのどれかのチャネルから
 	// データを受信するまで待機する。
 	go r.run()
 	// webサーバ起動
+	log.Print("Application starting. Port: 3000")
 	if err := http.ListenAndServe(":3000", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
