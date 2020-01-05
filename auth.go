@@ -83,6 +83,7 @@ func googleCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	// Cookieにユーザ名を保存
 	http.SetCookie(w, &http.Cookie{
 		Name:  "auth",
 		Value: base64.StdEncoding.EncodeToString([]byte(info.Name)),

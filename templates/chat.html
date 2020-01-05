@@ -12,6 +12,7 @@
       <div class="columns">
         <div class="column is-half is-offset-one-quarter">
           <h1 class="title">チャットルーム</h1>
+          <h2 class="subtitle">こんにちは、{{.UserName}}さん！</h2>
           <section id="chat" class="section">
             <div class="container messages">
             </div>
@@ -40,7 +41,7 @@
         if (!window.WebSocket) {
           alert('エラー: ブラウザがWebSocketに対応していません。');
         } else {
-          websocket = new WebSocket('ws://localhost:3000/room');
+          websocket = new WebSocket('ws://{{.Host}}/room');
           websocket.onclose = function() {
             alert('接続が切断されました。');
           }

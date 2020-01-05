@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"flag"
 	"html/template"
 	"log"
 	"net/http"
@@ -20,15 +22,26 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.once.Do(func() {
 		t.templ = template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
 	})
+	data := map[string]interface{}{
+		"Host": r.Host,
+	}
+
+	if authCookie, err := r.Cookie("auth"); err == nil {
+		if name, decodeErr := base64.StdEncoding.DecodeString(authCookie.Value); decodeErr == nil {
+			data["UserName"] = string(name)
+		}
+	}
 	// Execute は *Template型のメソッド。(html/template)
 	// パースされたテンプレート(html)を第二引数のデータオブジェクトに適用して
 	// 第一引数のio.Writerに出力する。
-	if err := t.templ.Execute(w, nil); err != nil {
+	if err := t.templ.Execute(w, data); err != nil {
 		http.Error(w, "500 Internal Server Error.", http.StatusInternalServerError)
 	}
 }
 
 func main() {
+	var port = flag.String("port", ":3000", "port")
+	flag.Parse()
 	http.Handle("/login", &templateHandler{filename: "login.html"})
 
 	http.HandleFunc("/auth/google", googleLoginHandler)
@@ -47,8 +60,8 @@ func main() {
 	// データを受信するまで待機する。
 	go r.run()
 	// webサーバ起動
-	log.Print("Application starting. Port: 3000")
-	if err := http.ListenAndServe(":3000", nil); err != nil {
+	log.Print("Application starting. Port", *port)
+	if err := http.ListenAndServe(*port, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
