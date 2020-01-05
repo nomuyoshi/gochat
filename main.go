@@ -47,7 +47,7 @@ func main() {
 	var port = flag.String("port", ":3000", "port")
 	flag.Parse()
 	http.Handle("/login", &templateHandler{filename: "login.html"})
-
+	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/auth/google", googleLoginHandler)
 	http.HandleFunc("/auth/callback/google", googleCallbackHandler)
 	// http.Handle の第二引数は Handler型。Handler型はServeHTTPメソッドを持つインターフェース
