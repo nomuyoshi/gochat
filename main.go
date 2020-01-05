@@ -31,13 +31,14 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.Handle("/login", &templateHandler{filename: "login.html"})
 
+	http.HandleFunc("/auth/google", googleLoginHandler)
+	http.HandleFunc("/auth/callback/google", googleCallbackHandler)
 	// http.Handle の第二引数は Handler型。Handler型はServeHTTPメソッドを持つインターフェース
 	// *templateHandlerにServeHTTPメソッドを定義したのは、http.Handleにわたすため。
 	// MustAuthにより、&templateHandlerをラップしたauthHandlerを生成する
 	// まずauthHandlerのServeHTTPが呼ばれ、ログイン判定を行い、ログイン済みの場合はtemplateHandlerの
 	// ServeHTTPが呼ばれる。
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
-
 	// roomのserveHTTP内でWebSocketとのコネクション確立、room.joinへの追加、継続的なWebSocketのデータ読み込みが行われる
 	r := newRoom()
 	http.Handle("/room", r)
