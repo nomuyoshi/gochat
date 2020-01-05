@@ -27,8 +27,12 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if authCookie, err := r.Cookie("auth"); err == nil {
-		if name, decodeErr := base64.StdEncoding.DecodeString(authCookie.Value); decodeErr == nil {
+		name, decodeErr := base64.StdEncoding.DecodeString(authCookie.Value)
+		if decodeErr == nil {
 			data["UserName"] = string(name)
+		} else {
+			http.Error(w, "500 Internal Server Error.", http.StatusInternalServerError)
+			return
 		}
 	}
 	// Execute は *Template型のメソッド。(html/template)

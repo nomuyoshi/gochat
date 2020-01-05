@@ -46,9 +46,16 @@
             alert('接続が切断されました。');
           }
           websocket.onmessage = function(e) {
-            chatMessages.append(
-              $('<article class="message">').append($('<div class="message-body">').text(e.data))
-            );
+            var msg = JSON.parse(e.data)
+            var cardContentTags = '<div class="content"><span class="tag">'
+              + msg.Name
+              + '</span><time class="is-size-7 has-text-gray-light">'
+              + new Date(msg.SentAt).toLocaleString()
+              + '</time><br>'
+              + msg.Message
+              + '</div>';
+
+            chatMessages.append('<div class="card"><div class="card-content">' + cardContentTags + '</div></div><hr>');
           }
         }
 
@@ -60,7 +67,11 @@
             return false;
           }
 
-          websocket.send(textArea.val());
+          websocket.send(
+            JSON.stringify({
+              "Message": textArea.val()
+            })
+          );
           textArea.val('');
           return false;
         });

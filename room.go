@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"log"
 	"net/http"
 
@@ -9,7 +10,7 @@ import (
 
 type room struct {
 	// ルームに参加しているクライアントに転送するためのメッセージを保持するチャネル
-	forward chan []byte
+	forward chan *message
 	// ルームへの入退室するクライアントを管理するチャネル
 	join  chan *client
 	leave chan *client
@@ -63,10 +64,24 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Fatal("ServeHTTP: ", err)
 		return
 	}
+
+	authCookie, err := req.Cookie("auth")
+	if err != nil {
+		log.Fatal("Cookieの取得に失敗しました:", err)
+		return
+	}
+
+	name, err := base64.StdEncoding.DecodeString(authCookie.Value)
+	if err != nil {
+		log.Fatal("名前のデコードに失敗しました:", err)
+		return
+	}
+
 	client := &client{
-		conn: conn,
-		send: make(chan []byte, messageBufferSize),
-		room: r,
+		conn:     conn,
+		send:     make(chan *message, messageBufferSize),
+		room:     r,
+		userName: string(name),
 	}
 
 	r.join <- client
@@ -79,7 +94,7 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func newRoom() *room {
 	return &room{
-		forward: make(chan []byte),
+		forward: make(chan *message),
 		join:    make(chan *client),
 		leave:   make(chan *client),
 		clients: make(map[*client]bool),
